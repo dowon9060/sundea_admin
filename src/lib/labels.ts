@@ -9,6 +9,7 @@ export const CATEGORY_LABELS: Record<StoreCategory, string> = {
   chicken: "치킨",
   gopchang: "곱창",
   hotteok: "호떡",
+  hoe: "회",
   other: "기타",
 };
 
@@ -21,6 +22,7 @@ export const CATEGORY_OPTIONS: StoreCategory[] = [
   "chicken",
   "gopchang",
   "hotteok",
+  "hoe",
   "other",
 ];
 
