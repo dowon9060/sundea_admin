@@ -10,16 +10,16 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { adminKey, ready } = useAuth();
+  const { authenticated, ready } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (ready && !adminKey) {
+    if (ready && !authenticated) {
       router.replace("/login");
     }
-  }, [ready, adminKey, router]);
+  }, [ready, authenticated, router]);
 
-  if (!ready || !adminKey) {
+  if (!ready || !authenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted">
         불러오는 중…

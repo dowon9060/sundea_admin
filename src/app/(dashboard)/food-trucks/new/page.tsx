@@ -4,7 +4,6 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminCreateStore } from "@/lib/admin";
-import { useAuth } from "@/contexts/auth-context";
 import { ApiError } from "@/lib/api-error";
 import type { BusinessStatus, StoreCategory } from "@/lib/types";
 
@@ -14,7 +13,6 @@ const fieldClass =
   "w-full rounded-md border border-border bg-white px-3 py-2 outline-none focus:border-accent";
 
 export default function NewFoodTruckPage() {
-  const { adminKey } = useAuth();
   const router = useRouter();
   const [name, setName] = useState("");
   const [category, setCategory] = useState<StoreCategory>("sundae");
@@ -32,7 +30,6 @@ export default function NewFoodTruckPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!adminKey) return;
     setError(null);
     setLoading(true);
     try {
@@ -41,7 +38,7 @@ export default function NewFoodTruckPage() {
       if (!Number.isFinite(latN) || !Number.isFinite(lngN)) {
         throw new ApiError("위도·경도를 숫자로 입력해 주세요.", 400);
       }
-      const created = await adminCreateStore(adminKey, {
+      const created = await adminCreateStore({
         name,
         category,
         address,

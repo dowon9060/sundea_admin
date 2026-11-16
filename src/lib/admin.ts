@@ -9,7 +9,6 @@ import type {
 } from "@/lib/types";
 
 export function adminListStores(
-  adminKey: string,
   query: Record<string, string | number | undefined> = {},
 ) {
   const params = new URLSearchParams();
@@ -20,36 +19,28 @@ export function adminListStores(
   const qs = params.toString();
   return apiRequest<AdminStoreListResponse>(
     `admin/stores${qs ? `?${qs}` : ""}`,
-    { adminKey },
   );
 }
 
-export function adminGetStore(adminKey: string, id: string) {
-  return apiRequest<AdminStoreDetail>(`admin/stores/${id}`, { adminKey });
+export function adminGetStore(id: string) {
+  return apiRequest<AdminStoreDetail>(`admin/stores/${id}`);
 }
 
-export function adminCreateStore(adminKey: string, body: CreateStorePayload) {
+export function adminCreateStore(body: CreateStorePayload) {
   return apiRequest<AdminStoreDetail>("admin/stores", {
     method: "POST",
-    adminKey,
     body: JSON.stringify(body),
   });
 }
 
-export function adminUpdateStore(
-  adminKey: string,
-  id: string,
-  body: UpdateStorePayload,
-) {
+export function adminUpdateStore(id: string, body: UpdateStorePayload) {
   return apiRequest<AdminStoreDetail>(`admin/stores/${id}`, {
     method: "PATCH",
-    adminKey,
     body: JSON.stringify(body),
   });
 }
 
 export function adminUpdateHours(
-  adminKey: string,
   id: string,
   hours: Array<{
     day_of_week: number;
@@ -60,17 +51,15 @@ export function adminUpdateHours(
 ) {
   return apiRequest<{ hours: unknown }>(`admin/stores/${id}/hours`, {
     method: "PATCH",
-    adminKey,
     body: JSON.stringify({ hours }),
   });
 }
 
-export function adminListRegions(adminKey: string) {
-  return apiRequest<RegionCount[]>("admin/regions", { adminKey });
+export function adminListRegions() {
+  return apiRequest<RegionCount[]>("admin/regions");
 }
 
 export function adminListRegistrationRequests(
-  adminKey: string,
   query: { status?: string; page?: number; limit?: number } = {},
 ) {
   const params = new URLSearchParams();
@@ -83,5 +72,5 @@ export function adminListRegistrationRequests(
     total: number;
     page: number;
     limit: number;
-  }>(`admin/registration-requests${qs ? `?${qs}` : ""}`, { adminKey });
+  }>(`admin/registration-requests${qs ? `?${qs}` : ""}`);
 }

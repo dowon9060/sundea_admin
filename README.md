@@ -6,7 +6,8 @@
 
 - Next.js (App Router) + Tailwind + Noto Sans KR
 - 백엔드: `sundae/backend-cf` (Cloudflare Workers + D1)
-- 인증: `ADMIN_KEY` (`X-Admin-Key`)
+- 로그인: 관리자 아이디 / 비밀번호 (httpOnly 세션 쿠키)
+- Worker 연동: 서버의 `SUNDAE_ADMIN_KEY`를 `X-Admin-Key`로 주입
 
 ## 로컬 실행
 
@@ -14,7 +15,7 @@
 
 ```bash
 cd ../sundae/backend-cf
-# .dev.vars 에 ADMIN_KEY 설정 (약한 키 금지, 예: 24자 이상 랜덤)
+# .dev.vars 에 ADMIN_KEY 설정 (약한 키 금지)
 npm run dev
 ```
 
@@ -22,11 +23,13 @@ npm run dev
 
 ```bash
 cp .env.example .env.local
+# SUNDAE_ADMIN_ID / SUNDAE_ADMIN_PASSWORD / SUNDAE_ADMIN_KEY / SUNDAE_SESSION_SECRET 설정
+# SUNDAE_ADMIN_KEY 는 backend-cf ADMIN_KEY 와 같아야 함
 npm install
 npm run dev
 ```
 
-브라우저에서 http://localhost:3000 → 로그인에 백엔드 `ADMIN_KEY` 입력.
+브라우저에서 http://localhost:3000 → 아이디·비밀번호로 로그인.
 
 ## 메뉴
 

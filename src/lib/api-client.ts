@@ -14,18 +14,18 @@ async function parseJson(res: Response): Promise<unknown> {
 
 export async function apiRequest<T>(
   path: string,
-  init: RequestInit & { adminKey?: string | null } = {},
+  init: RequestInit = {},
 ): Promise<T> {
-  const { adminKey, headers: initHeaders, ...rest } = init;
-  const headers = new Headers(initHeaders);
-  if (!headers.has("Content-Type") && rest.body) {
+  const headers = new Headers(init.headers);
+  if (!headers.has("Content-Type") && init.body) {
     headers.set("Content-Type", "application/json");
   }
-  if (adminKey) {
-    headers.set("X-Admin-Key", adminKey);
-  }
 
-  const res = await fetch(`${PREFIX}/${path}`, { ...rest, headers });
+  const res = await fetch(`${PREFIX}/${path}`, {
+    ...init,
+    headers,
+    credentials: "same-origin",
+  });
   const json = (await parseJson(res)) as
     | { data?: T; error?: string; message?: string }
     | null;

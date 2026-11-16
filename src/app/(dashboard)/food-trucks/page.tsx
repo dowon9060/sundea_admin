@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { adminListRegions, adminListStores } from "@/lib/admin";
-import { useAuth } from "@/contexts/auth-context";
 import { ApiError } from "@/lib/api-error";
 import {
   BUSINESS_STATUS_LABELS,
@@ -18,7 +17,6 @@ import type {
 } from "@/lib/types";
 
 export default function FoodTrucksPage() {
-  const { adminKey } = useAuth();
   const [items, setItems] = useState<AdminStoreListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [regions, setRegions] = useState<RegionCount[]>([]);
@@ -31,19 +29,18 @@ export default function FoodTrucksPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!adminKey) return;
     setLoading(true);
     setError(null);
     try {
       const [list, regionList] = await Promise.all([
-        adminListStores(adminKey, {
+        adminListStores({
           region: region || undefined,
           category: category || undefined,
           status: status || undefined,
           q: q || undefined,
           limit: 100,
         }),
-        adminListRegions(adminKey),
+        adminListRegions(),
       ]);
       setItems(list.items);
       setTotal(list.total);
@@ -53,7 +50,7 @@ export default function FoodTrucksPage() {
     } finally {
       setLoading(false);
     }
-  }, [adminKey, region, category, status, q]);
+  }, [region, category, status, q]);
 
   useEffect(() => {
     void load();

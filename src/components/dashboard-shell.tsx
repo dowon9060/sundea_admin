@@ -6,9 +6,13 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { useAuth } from "@/contexts/auth-context";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  const { logout } = useAuth();
+  const { logout, adminId } = useAuth();
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  async function onLogout() {
+    await logout();
+  }
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -32,9 +36,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
         <DashboardNav className="flex-1" />
         <div className="mt-auto border-t border-border p-4">
+          {adminId && (
+            <p className="mb-2 truncate text-xs text-muted">{adminId}</p>
+          )}
           <button
             type="button"
-            onClick={logout}
+            onClick={() => void onLogout()}
             className="w-full rounded-md border border-border px-3 py-2 text-sm text-stone-700 hover:bg-stone-50"
           >
             로그아웃
@@ -66,9 +73,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
             <DashboardNav className="flex-1" onNavigate={() => setMobileNavOpen(false)} />
             <div className="border-t border-border p-4">
+              {adminId && (
+                <p className="mb-2 truncate text-xs text-muted">{adminId}</p>
+              )}
               <button
                 type="button"
-                onClick={logout}
+                onClick={() => void onLogout()}
                 className="w-full rounded-md border border-border px-3 py-2 text-sm"
               >
                 로그아웃

@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  getUpstreamAdminKey,
+  verifySessionToken,
+  SESSION_COOKIE,
+} from "@/lib/admin-session";
 
 const UPSTREAM_TIMEOUT_MS = 25_000;
 const MAX_BODY_BYTES = 1_000_000;
@@ -12,7 +17,6 @@ function getUpstreamBaseUrl() {
 }
 
 function isAllowed(path: string, method: string) {
-  if (path === "health" && method === "GET") return true;
   if (!path.startsWith("admin/")) return false;
   return ["GET", "POST", "PATCH"].includes(method);
 }
@@ -35,9 +39,17 @@ async function proxy(req: NextRequest, pathSegments: string[]) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const adminKey = req.headers.get("x-admin-key");
-  if (path.startsWith("admin/") && !adminKey) {
+  const session = verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
+  if (!session) {
     return NextResponse.json({ error: "관리자 인증이 필요합니다." }, { status: 401 });
+  }
+
+  const adminKey = getUpstreamAdminKey();
+  if (!adminKey) {
+    return NextResponse.json(
+      { error: "SUNDAE_ADMIN_KEY가 설정되지 않았습니다." },
+      { status: 503 },
+    );
   }
 
   const target = new URL(`${base}/api/${path}`);
@@ -46,7 +58,7 @@ async function proxy(req: NextRequest, pathSegments: string[]) {
   });
 
   const headers = new Headers();
-  if (adminKey) headers.set("X-Admin-Key", adminKey);
+  headers.set("X-Admin-Key", adminKey);
   const contentType = req.headers.get("content-type");
   if (contentType) headers.set("content-type", contentType);
 

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { adminGetStore, adminUpdateHours, adminUpdateStore } from "@/lib/admin";
-import { useAuth } from "@/contexts/auth-context";
 import { ApiError } from "@/lib/api-error";
 import { DAY_LABELS } from "@/lib/labels";
 import type {
@@ -28,7 +27,6 @@ type HourDraft = {
 export default function FoodTruckDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
-  const { adminKey } = useAuth();
   const [store, setStore] = useState<AdminStoreDetail | null>(null);
   const [name, setName] = useState("");
   const [category, setCategory] = useState<StoreCategory>("sundae");
@@ -49,11 +47,11 @@ export default function FoodTruckDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!adminKey || !id) return;
+    if (!id) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await adminGetStore(adminKey, id);
+      const data = await adminGetStore(id);
       setStore(data);
       setName(data.name);
       setCategory(data.category);
@@ -87,7 +85,7 @@ export default function FoodTruckDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [adminKey, id]);
+  }, [id]);
 
   useEffect(() => {
     void load();
@@ -95,7 +93,7 @@ export default function FoodTruckDetailPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!adminKey || !id) return;
+    if (!id) return;
     setSaving(true);
     setError(null);
     setMessage(null);
@@ -105,7 +103,7 @@ export default function FoodTruckDetailPage() {
       if (!Number.isFinite(latN) || !Number.isFinite(lngN)) {
         throw new ApiError("위도·경도를 숫자로 입력해 주세요.", 400);
       }
-      await adminUpdateStore(adminKey, id, {
+      await adminUpdateStore(id, {
         name,
         category,
         status,
@@ -121,7 +119,6 @@ export default function FoodTruckDetailPage() {
           .map((m) => ({ name: m.name.trim(), price: Number(m.price) || 0 })),
       });
       await adminUpdateHours(
-        adminKey,
         id,
         hours.map((h) => ({
           day_of_week: h.day_of_week,
