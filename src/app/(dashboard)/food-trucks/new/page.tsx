@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AddressLocationFields } from "@/components/address-location-fields";
 import { CategorySelect } from "@/components/category-select";
 import { adminCreateStore } from "@/lib/admin";
 import { ApiError } from "@/lib/api-error";
@@ -95,35 +96,19 @@ export default function NewFoodTruckPage() {
             className={fieldClass}
           />
         </Field>
-        <Field label="주소 (시/도부터)" required>
-          <input
-            required
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="예: 서울특별시 동작구 상도동"
-            className={fieldClass}
-          />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="위도" required>
-            <input
-              required
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-              placeholder="37.5"
-              className={fieldClass}
-            />
-          </Field>
-          <Field label="경도" required>
-            <input
-              required
-              value={lng}
-              onChange={(e) => setLng(e.target.value)}
-              placeholder="127.0"
-              className={fieldClass}
-            />
-          </Field>
-        </div>
+        <AddressLocationFields
+          address={address}
+          lat={lat}
+          lng={lng}
+          onAddressChange={setAddress}
+          onLatChange={setLat}
+          onLngChange={setLng}
+          addressRequired
+          latRequired
+          lngRequired
+          addressLabel="주소 (시/도부터)"
+          addressPlaceholder="예: 서울특별시 동작구 상도동"
+        />
         <Field label="위치 메모">
           <input
             value={locationNote}

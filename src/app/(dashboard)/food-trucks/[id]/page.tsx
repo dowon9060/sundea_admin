@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { AddressLocationFields } from "@/components/address-location-fields";
 import { CategorySelect } from "@/components/category-select";
 import { adminGetStore, adminUpdateHours, adminUpdateStore } from "@/lib/admin";
 import { ApiError } from "@/lib/api-error";
@@ -200,21 +201,14 @@ export default function FoodTruckDetailPage() {
             </select>
           </Field>
         </div>
-        <Field label="주소">
-          <input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className={fieldClass}
-          />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="위도">
-            <input value={lat} onChange={(e) => setLat(e.target.value)} className={fieldClass} />
-          </Field>
-          <Field label="경도">
-            <input value={lng} onChange={(e) => setLng(e.target.value)} className={fieldClass} />
-          </Field>
-        </div>
+        <AddressLocationFields
+          address={address}
+          lat={lat}
+          lng={lng}
+          onAddressChange={setAddress}
+          onLatChange={setLat}
+          onLngChange={setLng}
+        />
         <Field label="위치 메모">
           <input
             value={locationNote}

@@ -25,10 +25,13 @@ npm run dev
 cp .env.example .env.local
 # SUNDAE_ADMIN_KEY = backend-cf ADMIN_KEY
 # SUNDAE_SESSION_SECRET 설정
+# (선택) KAKAO_REST_API_KEY — 주소 검색 정확도 향상
 npm run dev
 ```
 
 초기 관리자: `jiras90@gmail.com` / (시드된 임시 비밀번호)
+
+푸드트럭 등록·수정 시 주소 검색/우편번호로 위치를 고르면 위도·경도가 자동 입력됩니다.
 
 ## 메뉴
 
