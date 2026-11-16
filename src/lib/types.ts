@@ -1,4 +1,11 @@
-export type StoreCategory = "sundae" | "chicken" | "other";
+export type StoreCategory =
+  | "sundae"
+  | "bungeoppang"
+  | "dakkochi"
+  | "mandu"
+  | "takoyaki"
+  | "chicken"
+  | "other";
 export type StoreStatus = "active" | "inactive";
 export type BusinessStatus = "expected" | "confirmed_open" | "unknown";
 
@@ -63,6 +70,7 @@ export type RegionCount = {
 export type RegistrationRequest = {
   id: string;
   name: string;
+  category: StoreCategory | null;
   menu: string;
   today_hours: string;
   location_text: string;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { CategorySelect } from "@/components/category-select";
 import { adminGetStore, adminUpdateHours, adminUpdateStore } from "@/lib/admin";
 import { ApiError } from "@/lib/api-error";
 import { DAY_LABELS } from "@/lib/labels";
@@ -167,15 +168,13 @@ export default function FoodTruckDetailPage() {
         </Field>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="카테고리">
-            <select
+            <CategorySelect
               value={category}
-              onChange={(e) => setCategory(e.target.value as StoreCategory)}
+              onChange={(v) => {
+                if (v) setCategory(v);
+              }}
               className={fieldClass}
-            >
-              <option value="sundae">순대차</option>
-              <option value="chicken">통닭</option>
-              <option value="other">타코야끼</option>
-            </select>
+            />
           </Field>
           <Field label="상태">
             <select

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CategorySelect } from "@/components/category-select";
 import { adminCreateStore } from "@/lib/admin";
 import { ApiError } from "@/lib/api-error";
 import type { BusinessStatus, StoreCategory } from "@/lib/types";
@@ -85,16 +86,14 @@ export default function NewFoodTruckPage() {
             className={fieldClass}
           />
         </Field>
-        <Field label="카테고리">
-          <select
+        <Field label="카테고리" required>
+          <CategorySelect
             value={category}
-            onChange={(e) => setCategory(e.target.value as StoreCategory)}
+            onChange={(v) => {
+              if (v) setCategory(v);
+            }}
             className={fieldClass}
-          >
-            <option value="sundae">순대차</option>
-            <option value="chicken">통닭</option>
-            <option value="other">타코야끼</option>
-          </select>
+          />
         </Field>
         <Field label="주소 (시/도부터)" required>
           <input

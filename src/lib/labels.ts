@@ -2,9 +2,23 @@ import type { BusinessStatus, StoreCategory, StoreStatus } from "@/lib/types";
 
 export const CATEGORY_LABELS: Record<StoreCategory, string> = {
   sundae: "순대차",
-  chicken: "통닭",
-  other: "타코야끼",
+  bungeoppang: "붕어빵",
+  dakkochi: "닭꼬치",
+  mandu: "만두",
+  takoyaki: "타코야키",
+  chicken: "치킨",
+  other: "기타",
 };
+
+export const CATEGORY_OPTIONS: StoreCategory[] = [
+  "sundae",
+  "bungeoppang",
+  "dakkochi",
+  "mandu",
+  "takoyaki",
+  "chicken",
+  "other",
+];
 
 export const STATUS_LABELS: Record<StoreStatus, string> = {
   active: "활성",

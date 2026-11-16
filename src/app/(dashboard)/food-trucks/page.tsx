@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { adminListRegions, adminListStores } from "@/lib/admin";
 import { ApiError } from "@/lib/api-error";
+import { CategorySelect } from "@/components/category-select";
 import {
   BUSINESS_STATUS_LABELS,
   CATEGORY_LABELS,
@@ -89,16 +90,12 @@ export default function FoodTrucksPage() {
         </label>
         <label className="text-sm">
           <span className="mb-1 block text-muted">카테고리</span>
-          <select
+          <CategorySelect
             value={category}
-            onChange={(e) => setCategory(e.target.value as "" | StoreCategory)}
-            className="min-w-32 rounded-md border border-border bg-white px-3 py-2"
-          >
-            <option value="">전체</option>
-            <option value="sundae">순대차</option>
-            <option value="chicken">통닭</option>
-            <option value="other">타코야끼</option>
-          </select>
+            onChange={(v) => setCategory(v)}
+            allowAll
+            className="min-w-36 rounded-md border border-border bg-white px-3 py-2"
+          />
         </label>
         <label className="text-sm">
           <span className="mb-1 block text-muted">상태</span>
