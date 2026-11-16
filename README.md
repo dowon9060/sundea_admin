@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 순대차 어드민
 
-## Getting Started
+순대차(푸드트럭) 앱 운영용 Next.js 어드민입니다.
 
-First, run the development server:
+## 구성
+
+- Next.js (App Router) + Tailwind + Noto Sans KR
+- 백엔드: `sundae/backend-cf` (Cloudflare Workers + D1)
+- 인증: `ADMIN_KEY` (`X-Admin-Key`)
+
+## 로컬 실행
+
+1. 백엔드 (`sundae/backend-cf`)
 
 ```bash
+cd ../sundae/backend-cf
+# .dev.vars 에 ADMIN_KEY 설정 (약한 키 금지, 예: 24자 이상 랜덤)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. 어드민
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+브라우저에서 http://localhost:3000 → 로그인에 백엔드 `ADMIN_KEY` 입력.
 
-## Learn More
+## 메뉴
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 푸드트럭 관리: 목록 / 시·도 필터 / 직접 등록(즉시 앱 반영) / 상세 수정
+- 광고 관리 (배너): 준비중
+- 결제정보: 준비중
