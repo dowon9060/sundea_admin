@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getUpstreamAdminKey,
+  getUpstreamBaseUrl,
   verifySessionToken,
   SESSION_COOKIE,
 } from "@/lib/admin-session";
@@ -8,16 +9,9 @@ import {
 const UPSTREAM_TIMEOUT_MS = 25_000;
 const MAX_BODY_BYTES = 1_000_000;
 
-function getUpstreamBaseUrl() {
-  const url = process.env.SUNDAE_API_URL?.trim();
-  if (!url) {
-    throw new Error("SUNDAE_API_URL missing");
-  }
-  return url.replace(/\/$/, "");
-}
-
 function isAllowed(path: string, method: string) {
   if (!path.startsWith("admin/")) return false;
+  if (path.startsWith("admin/auth/")) return false;
   return ["GET", "POST", "PATCH"].includes(method);
 }
 
@@ -59,6 +53,7 @@ async function proxy(req: NextRequest, pathSegments: string[]) {
 
   const headers = new Headers();
   headers.set("X-Admin-Key", adminKey);
+  headers.set("X-Admin-Email", session.email);
   const contentType = req.headers.get("content-type");
   if (contentType) headers.set("content-type", contentType);
 

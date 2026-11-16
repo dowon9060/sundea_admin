@@ -6,16 +6,16 @@
 
 - Next.js (App Router) + Tailwind + Noto Sans KR
 - 백엔드: `sundae/backend-cf` (Cloudflare Workers + D1)
-- 로그인: 관리자 아이디 / 비밀번호 (httpOnly 세션 쿠키)
+- 로그인: 관리자 이메일 / 비밀번호 (D1 `admins` + httpOnly 세션)
 - Worker 연동: 서버의 `SUNDAE_ADMIN_KEY`를 `X-Admin-Key`로 주입
 
 ## 로컬 실행
 
-1. 백엔드 (`sundae/backend-cf`)
+1. 백엔드
 
 ```bash
 cd ../sundae/backend-cf
-# .dev.vars 에 ADMIN_KEY 설정 (약한 키 금지)
+npm run db:migrate:local
 npm run dev
 ```
 
@@ -23,16 +23,16 @@ npm run dev
 
 ```bash
 cp .env.example .env.local
-# SUNDAE_ADMIN_ID / SUNDAE_ADMIN_PASSWORD / SUNDAE_ADMIN_KEY / SUNDAE_SESSION_SECRET 설정
-# SUNDAE_ADMIN_KEY 는 backend-cf ADMIN_KEY 와 같아야 함
-npm install
+# SUNDAE_ADMIN_KEY = backend-cf ADMIN_KEY
+# SUNDAE_SESSION_SECRET 설정
 npm run dev
 ```
 
-브라우저에서 http://localhost:3000 → 아이디·비밀번호로 로그인.
+초기 관리자: `jiras90@gmail.com` / (시드된 임시 비밀번호)
 
 ## 메뉴
 
-- 푸드트럭 관리: 목록 / 시·도 필터 / 직접 등록(즉시 앱 반영) / 상세 수정
+- 푸드트럭 관리
 - 광고 관리 (배너): 준비중
 - 결제정보: 준비중
+- 내정보: 이름·이메일·비밀번호 수정

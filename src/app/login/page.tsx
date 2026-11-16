@@ -8,7 +8,7 @@ import { ApiError } from "@/lib/api-error";
 export default function LoginPage() {
   const { authenticated, ready, login } = useAuth();
   const router = useRouter();
-  const [id, setId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,13 +24,13 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await login(id, password);
+      await login(email, password);
       router.replace("/food-trucks");
     } catch (err) {
       const message =
         err instanceof ApiError
           ? err.message
-          : "로그인에 실패했습니다. 아이디와 비밀번호를 확인해 주세요.";
+          : "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.";
       setError(message);
     } finally {
       setLoading(false);
@@ -51,18 +51,19 @@ export default function LoginPage() {
         <p className="text-xs font-medium tracking-wide text-muted">순대차</p>
         <h1 className="mt-1 text-2xl font-semibold text-accent">운영 어드민</h1>
         <p className="mt-2 text-sm text-muted">
-          관리자 아이디와 비밀번호로 로그인합니다.
+          관리자 이메일과 비밀번호로 로그인합니다.
         </p>
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block text-sm">
-            <span className="mb-1.5 block text-stone-700">아이디</span>
+            <span className="mb-1.5 block text-stone-700">이메일</span>
             <input
-              type="text"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               autoComplete="username"
+              required
               className="w-full rounded-md border border-border bg-white px-3 py-2 outline-none focus:border-accent"
-              placeholder="관리자 아이디"
+              placeholder="name@example.com"
             />
           </label>
           <label className="block text-sm">
@@ -72,6 +73,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              required
               className="w-full rounded-md border border-border bg-white px-3 py-2 outline-none focus:border-accent"
               placeholder="비밀번호"
             />

@@ -6,7 +6,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { useAuth } from "@/contexts/auth-context";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  const { logout, adminId } = useAuth();
+  const { logout, admin } = useAuth();
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -36,8 +36,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
         <DashboardNav className="flex-1" />
         <div className="mt-auto border-t border-border p-4">
-          {adminId && (
-            <p className="mb-2 truncate text-xs text-muted">{adminId}</p>
+          {admin && (
+            <div className="mb-2 truncate text-xs text-muted">
+              <div className="font-medium text-stone-700">{admin.name}</div>
+              <div>{admin.email}</div>
+            </div>
           )}
           <button
             type="button"
@@ -73,8 +76,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
             <DashboardNav className="flex-1" onNavigate={() => setMobileNavOpen(false)} />
             <div className="border-t border-border p-4">
-              {adminId && (
-                <p className="mb-2 truncate text-xs text-muted">{adminId}</p>
+              {admin && (
+                <div className="mb-2 truncate text-xs text-muted">
+                  <div className="font-medium text-stone-700">{admin.name}</div>
+                  <div>{admin.email}</div>
+                </div>
               )}
               <button
                 type="button"
