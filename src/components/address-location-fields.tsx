@@ -1,7 +1,25 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useId, useRef, useState } from "react";
-import { searchAddress, type GeocodeResult } from "@/lib/geocode";
+import {
+  reverseGeocode,
+  searchAddress,
+  type GeocodeResult,
+} from "@/lib/geocode";
+
+const LocationMapPicker = dynamic(
+  () =>
+    import("@/components/location-map-picker").then((m) => m.LocationMapPicker),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-72 items-center justify-center rounded-md border border-border bg-stone-50 text-sm text-muted">
+        지도 불러오는 중…
+      </div>
+    ),
+  },
+);
 
 const fieldClass =
   "w-full rounded-md border border-border bg-white px-3 py-2 outline-none focus:border-accent";
@@ -12,14 +30,10 @@ type DaumPostcodeData = {
   autoRoadAddress?: string;
   autoJibunAddress?: string;
   buildingName?: string;
-  sido?: string;
-  sigungu?: string;
 };
 
 type DaumPostcodeCtor = new (options: {
   oncomplete: (data: DaumPostcodeData) => void;
-  width?: string | number;
-  height?: string | number;
 }) => { open: () => void };
 
 declare global {
@@ -61,7 +75,7 @@ function loadDaumPostcode(): Promise<void> {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src =
-      "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+      "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
     script.async = true;
     script.dataset.daumPostcode = "1";
     script.onload = () => resolve();
@@ -69,6 +83,11 @@ function loadDaumPostcode(): Promise<void> {
       reject(new Error("우편번호 스크립트를 불러오지 못했습니다."));
     document.head.appendChild(script);
   });
+}
+
+function parseCoord(value: string): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 export function AddressLocationFields({
@@ -82,18 +101,24 @@ export function AddressLocationFields({
   latRequired,
   lngRequired,
   addressLabel = "주소",
-  addressPlaceholder = "예: 서울특별시 송파구 문정동 618",
+  addressPlaceholder = "주소 검색으로 선택하거나 지도에서 지정",
 }: Props) {
   const listId = useId();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [open, setOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [resolving, setResolving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reqSeq = useRef(0);
+  const reverseSeq = useRef(0);
+
+  const latN = parseCoord(lat);
+  const lngN = parseCoord(lng);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -111,6 +136,39 @@ export function AddressLocationFields({
     };
   }, []);
 
+  async function applyCoords(nextLat: number, nextLng: number, opts?: {
+    keepAddress?: boolean;
+    openMap?: boolean;
+    hintText?: string;
+  }) {
+    onLatChange(String(nextLat));
+    onLngChange(String(nextLng));
+    if (opts?.openMap) setMapOpen(true);
+    if (opts?.keepAddress) {
+      if (opts.hintText) setHint(opts.hintText);
+      return;
+    }
+
+    const seq = ++reverseSeq.current;
+    setResolving(true);
+    setError(null);
+    try {
+      const data = await reverseGeocode(nextLat, nextLng);
+      if (seq !== reverseSeq.current) return;
+      onAddressChange(data.address);
+      setHint(opts?.hintText || `위치·주소 반영: ${data.address}`);
+    } catch (err) {
+      if (seq !== reverseSeq.current) return;
+      setError(
+        err instanceof Error
+          ? err.message
+          : "좌표는 반영됐지만 주소를 찾지 못했습니다.",
+      );
+    } finally {
+      if (seq === reverseSeq.current) setResolving(false);
+    }
+  }
+
   function applyResult(item: GeocodeResult) {
     onAddressChange(item.address);
     onLatChange(String(item.lat));
@@ -120,6 +178,7 @@ export function AddressLocationFields({
     setOpen(false);
     setError(null);
     setHint(`위치 반영: ${item.name}`);
+    setMapOpen(true);
   }
 
   function scheduleSearch(value: string) {
@@ -187,20 +246,23 @@ export function AddressLocationFields({
             const first = dataList[0];
             if (!first) {
               setError(
-                "주소는 입력됐지만 좌표를 찾지 못했습니다. 위도·경도를 직접 입력해 주세요.",
+                "주소는 입력됐지만 좌표를 찾지 못했습니다. 지도로 위치를 지정해 주세요.",
               );
+              setMapOpen(true);
               return;
             }
             onLatChange(String(first.lat));
             onLngChange(String(first.lng));
             setHint(`좌표 반영: ${first.lat}, ${first.lng}`);
             setError(null);
+            setMapOpen(true);
           } catch (err) {
             setError(
               err instanceof Error
                 ? err.message
-                : "좌표 검색에 실패했습니다. 위도·경도를 직접 입력해 주세요.",
+                : "좌표 검색에 실패했습니다. 지도로 위치를 지정해 주세요.",
             );
+            setMapOpen(true);
           } finally {
             setSearching(false);
           }
@@ -213,6 +275,11 @@ export function AddressLocationFields({
           : "우편번호 검색을 열 수 없습니다.",
       );
     }
+  }
+
+  function toggleMap() {
+    setMapOpen((prev) => !prev);
+    setError(null);
   }
 
   return (
@@ -241,16 +308,25 @@ export function AddressLocationFields({
             >
               우편번호
             </button>
+            <button
+              type="button"
+              onClick={toggleMap}
+              className="shrink-0 rounded-md border border-border px-3 py-2 text-sm whitespace-nowrap hover:bg-stone-50"
+            >
+              {mapOpen ? "지도 닫기" : "지도로 보기"}
+            </button>
           </div>
         </label>
-        {searching && (
-          <p className="mt-1.5 text-xs text-muted">검색 중…</p>
+        {(searching || resolving) && (
+          <p className="mt-1.5 text-xs text-muted">
+            {resolving ? "주소 변환 중…" : "검색 중…"}
+          </p>
         )}
         {open && results.length > 0 && (
           <ul
             id={listId}
             role="listbox"
-            className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-white shadow-lg"
+            className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-white shadow-lg"
           >
             {results.map((item) => (
               <li key={item.id}>
@@ -284,8 +360,21 @@ export function AddressLocationFields({
           onChange={(e) => onAddressChange(e.target.value)}
           placeholder={addressPlaceholder}
           className={fieldClass}
+          title="주소 검색 또는 지도에서 위치를 지정하면 자동 입력됩니다"
         />
       </label>
+
+      {mapOpen && (
+        <LocationMapPicker
+          lat={latN}
+          lng={lngN}
+          onChange={(nextLat, nextLng) => {
+            void applyCoords(nextLat, nextLng, {
+              hintText: "지도에서 위치를 변경했습니다. 저장하면 앱에 반영됩니다.",
+            });
+          }}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
@@ -299,6 +388,7 @@ export function AddressLocationFields({
             onChange={(e) => onLatChange(e.target.value)}
             placeholder="37.5"
             className={fieldClass}
+            readOnly
           />
         </label>
         <label className="block text-sm">
@@ -312,6 +402,7 @@ export function AddressLocationFields({
             onChange={(e) => onLngChange(e.target.value)}
             placeholder="127.0"
             className={fieldClass}
+            readOnly
           />
         </label>
       </div>
@@ -319,7 +410,7 @@ export function AddressLocationFields({
       {error && <p className="text-sm text-red-700">{error}</p>}
       {hint && !error && <p className="text-sm text-green-700">{hint}</p>}
       <p className="text-xs text-muted">
-        검색 또는 우편번호로 주소를 고르면 위도·경도가 자동 입력됩니다.
+        주소 검색·우편번호·지도로 위치를 잡은 뒤 저장하면 앱에 그대로 노출됩니다.
       </p>
     </div>
   );
