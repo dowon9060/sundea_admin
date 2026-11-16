@@ -5,6 +5,8 @@ export type StoreCategory =
   | "mandu"
   | "takoyaki"
   | "chicken"
+  | "gopchang"
+  | "hotteok"
   | "other";
 export type StoreStatus = "active" | "inactive";
 export type BusinessStatus = "expected" | "confirmed_open" | "unknown";
