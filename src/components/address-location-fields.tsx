@@ -15,7 +15,7 @@ const LocationMapPicker = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex h-72 items-center justify-center rounded-md border border-border bg-stone-50 text-sm text-muted">
-        지도 불러오는 중…
+        네이버 지도 불러오는 중…
       </div>
     ),
   },
@@ -23,24 +23,6 @@ const LocationMapPicker = dynamic(
 
 const fieldClass =
   "w-full rounded-md border border-border bg-white px-3 py-2 outline-none focus:border-accent";
-
-type DaumPostcodeData = {
-  roadAddress?: string;
-  jibunAddress?: string;
-  autoRoadAddress?: string;
-  autoJibunAddress?: string;
-  buildingName?: string;
-};
-
-type DaumPostcodeCtor = new (options: {
-  oncomplete: (data: DaumPostcodeData) => void;
-}) => { open: () => void };
-
-declare global {
-  interface Window {
-    daum?: { Postcode: DaumPostcodeCtor };
-  }
-}
 
 type Props = {
   address: string;
@@ -55,35 +37,6 @@ type Props = {
   addressLabel?: string;
   addressPlaceholder?: string;
 };
-
-function loadDaumPostcode(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (window.daum?.Postcode) return Promise.resolve();
-  const existing = document.querySelector<HTMLScriptElement>(
-    'script[data-daum-postcode="1"]',
-  );
-  if (existing) {
-    return new Promise((resolve, reject) => {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener(
-        "error",
-        () => reject(new Error("우편번호 스크립트를 불러오지 못했습니다.")),
-        { once: true },
-      );
-    });
-  }
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src =
-      "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-    script.async = true;
-    script.dataset.daumPostcode = "1";
-    script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error("우편번호 스크립트를 불러오지 못했습니다."));
-    document.head.appendChild(script);
-  });
-}
 
 function parseCoord(value: string): number | null {
   const n = Number(value);
@@ -101,7 +54,7 @@ export function AddressLocationFields({
   latRequired,
   lngRequired,
   addressLabel = "주소",
-  addressPlaceholder = "주소 검색으로 선택하거나 지도에서 지정",
+  addressPlaceholder = "네이버 주소 검색 또는 지도에서 지정",
 }: Props) {
   const listId = useId();
   const [query, setQuery] = useState("");
@@ -136,18 +89,13 @@ export function AddressLocationFields({
     };
   }, []);
 
-  async function applyCoords(nextLat: number, nextLng: number, opts?: {
-    keepAddress?: boolean;
-    openMap?: boolean;
-    hintText?: string;
-  }) {
+  async function applyCoords(
+    nextLat: number,
+    nextLng: number,
+    hintText?: string,
+  ) {
     onLatChange(String(nextLat));
     onLngChange(String(nextLng));
-    if (opts?.openMap) setMapOpen(true);
-    if (opts?.keepAddress) {
-      if (opts.hintText) setHint(opts.hintText);
-      return;
-    }
 
     const seq = ++reverseSeq.current;
     setResolving(true);
@@ -156,7 +104,7 @@ export function AddressLocationFields({
       const data = await reverseGeocode(nextLat, nextLng);
       if (seq !== reverseSeq.current) return;
       onAddressChange(data.address);
-      setHint(opts?.hintText || `위치·주소 반영: ${data.address}`);
+      setHint(hintText || `위치·주소 반영: ${data.address}`);
     } catch (err) {
       if (seq !== reverseSeq.current) return;
       setError(
@@ -177,7 +125,7 @@ export function AddressLocationFields({
     setResults([]);
     setOpen(false);
     setError(null);
-    setHint(`위치 반영: ${item.name}`);
+    setHint(`네이버 검색 반영: ${item.name}`);
     setMapOpen(true);
   }
 
@@ -209,7 +157,7 @@ export function AddressLocationFields({
         setResults([]);
         setOpen(false);
         setError(
-          err instanceof Error ? err.message : "주소 검색에 실패했습니다.",
+          err instanceof Error ? err.message : "네이버 주소 검색에 실패했습니다.",
         );
       } finally {
         if (seq === reqSeq.current) setSearching(false);
@@ -217,76 +165,11 @@ export function AddressLocationFields({
     }, 320);
   }
 
-  async function openPostcode() {
-    setError(null);
-    setHint(null);
-    try {
-      await loadDaumPostcode();
-      if (!window.daum?.Postcode) {
-        throw new Error("우편번호 서비스를 사용할 수 없습니다.");
-      }
-      new window.daum.Postcode({
-        oncomplete: async (data) => {
-          const road =
-            data.roadAddress ||
-            data.autoRoadAddress ||
-            data.jibunAddress ||
-            data.autoJibunAddress ||
-            "";
-          const building = data.buildingName ? ` ${data.buildingName}` : "";
-          const picked = `${road}${building}`.trim();
-          if (!picked) {
-            setError("선택한 주소를 확인하지 못했습니다.");
-            return;
-          }
-          onAddressChange(picked);
-          setSearching(true);
-          try {
-            const dataList = await searchAddress(picked);
-            const first = dataList[0];
-            if (!first) {
-              setError(
-                "주소는 입력됐지만 좌표를 찾지 못했습니다. 지도로 위치를 지정해 주세요.",
-              );
-              setMapOpen(true);
-              return;
-            }
-            onLatChange(String(first.lat));
-            onLngChange(String(first.lng));
-            setHint(`좌표 반영: ${first.lat}, ${first.lng}`);
-            setError(null);
-            setMapOpen(true);
-          } catch (err) {
-            setError(
-              err instanceof Error
-                ? err.message
-                : "좌표 검색에 실패했습니다. 지도로 위치를 지정해 주세요.",
-            );
-            setMapOpen(true);
-          } finally {
-            setSearching(false);
-          }
-        },
-      }).open();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "우편번호 검색을 열 수 없습니다.",
-      );
-    }
-  }
-
-  function toggleMap() {
-    setMapOpen((prev) => !prev);
-    setError(null);
-  }
-
   return (
     <div className="space-y-4">
       <div ref={wrapRef} className="relative">
         <label className="block text-sm">
-          <span className="mb-1.5 block text-stone-700">주소 검색</span>
+          <span className="mb-1.5 block text-stone-700">네이버 주소 검색</span>
           <div className="flex gap-2">
             <input
               value={query}
@@ -294,7 +177,7 @@ export function AddressLocationFields({
               onFocus={() => {
                 if (results.length > 0) setOpen(true);
               }}
-              placeholder="동·역·도로명으로 검색"
+              placeholder="도로명·지번·동 이름으로 검색"
               className={fieldClass}
               autoComplete="off"
               role="combobox"
@@ -303,14 +186,10 @@ export function AddressLocationFields({
             />
             <button
               type="button"
-              onClick={() => void openPostcode()}
-              className="shrink-0 rounded-md border border-border px-3 py-2 text-sm whitespace-nowrap hover:bg-stone-50"
-            >
-              우편번호
-            </button>
-            <button
-              type="button"
-              onClick={toggleMap}
+              onClick={() => {
+                setMapOpen((prev) => !prev);
+                setError(null);
+              }}
               className="shrink-0 rounded-md border border-border px-3 py-2 text-sm whitespace-nowrap hover:bg-stone-50"
             >
               {mapOpen ? "지도 닫기" : "지도로 보기"}
@@ -319,7 +198,7 @@ export function AddressLocationFields({
         </label>
         {(searching || resolving) && (
           <p className="mt-1.5 text-xs text-muted">
-            {resolving ? "주소 변환 중…" : "검색 중…"}
+            {resolving ? "주소 변환 중…" : "네이버 검색 중…"}
           </p>
         )}
         {open && results.length > 0 && (
@@ -360,7 +239,6 @@ export function AddressLocationFields({
           onChange={(e) => onAddressChange(e.target.value)}
           placeholder={addressPlaceholder}
           className={fieldClass}
-          title="주소 검색 또는 지도에서 위치를 지정하면 자동 입력됩니다"
         />
       </label>
 
@@ -369,9 +247,11 @@ export function AddressLocationFields({
           lat={latN}
           lng={lngN}
           onChange={(nextLat, nextLng) => {
-            void applyCoords(nextLat, nextLng, {
-              hintText: "지도에서 위치를 변경했습니다. 저장하면 앱에 반영됩니다.",
-            });
+            void applyCoords(
+              nextLat,
+              nextLng,
+              "지도에서 위치를 변경했습니다. 저장하면 앱에 반영됩니다.",
+            );
           }}
         />
       )}
@@ -410,7 +290,7 @@ export function AddressLocationFields({
       {error && <p className="text-sm text-red-700">{error}</p>}
       {hint && !error && <p className="text-sm text-green-700">{hint}</p>}
       <p className="text-xs text-muted">
-        주소 검색·우편번호·지도로 위치를 잡은 뒤 저장하면 앱에 그대로 노출됩니다.
+        네이버 주소 검색·지도로 위치를 잡은 뒤 저장하면 앱에 그대로 노출됩니다.
       </p>
     </div>
   );

@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { loadNaverMaps } from "@/lib/naver-maps";
 
-const DEFAULT_CENTER: [number, number] = [37.5665, 126.978];
+const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 };
 const DEFAULT_ZOOM = 16;
 
 type Props = {
@@ -15,92 +14,126 @@ type Props = {
 
 export function LocationMapPicker({ lat, lng, onChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const mapRef = useRef<naver.maps.Map | null>(null);
+  const markerRef = useRef<naver.maps.Marker | null>(null);
   const onChangeRef = useRef(onChange);
+  const listenersRef = useRef<naver.maps.MapEventListener[]>([]);
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    let cancelled = false;
 
-    const hasPoint = lat != null && lng != null;
-    const map = L.map(containerRef.current, {
-      center: hasPoint ? [lat, lng] : DEFAULT_CENTER,
-      zoom: hasPoint ? DEFAULT_ZOOM : 12,
-      scrollWheelZoom: true,
-    });
+    void (async () => {
+      try {
+        const maps = await loadNaverMaps();
+        if (cancelled || !containerRef.current) return;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map);
+        const hasPoint = lat != null && lng != null;
+        const center = new maps.LatLng(
+          hasPoint ? lat : DEFAULT_CENTER.lat,
+          hasPoint ? lng : DEFAULT_CENTER.lng,
+        );
 
-    const icon = L.divIcon({
-      className: "",
-      html: `<div style="width:18px;height:18px;border-radius:9999px;background:#c2410c;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-    });
+        const map = new maps.Map(containerRef.current, {
+          center,
+          zoom: hasPoint ? DEFAULT_ZOOM : 12,
+          zoomControl: true,
+          zoomControlOptions: {
+            position: maps.Position.TOP_RIGHT,
+          },
+        });
 
-    const marker = L.marker(hasPoint ? [lat, lng] : DEFAULT_CENTER, {
-      draggable: true,
-      icon,
-    }).addTo(map);
+        const marker = new maps.Marker({
+          position: center,
+          map,
+          draggable: true,
+          icon: {
+            content:
+              '<div style="width:18px;height:18px;border-radius:9999px;background:#c2410c;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>',
+            anchor: new maps.Point(9, 9),
+          },
+        });
 
-    marker.on("dragend", () => {
-      const pos = marker.getLatLng();
-      onChangeRef.current(Number(pos.lat.toFixed(6)), Number(pos.lng.toFixed(6)));
-    });
+        const emit = (nextLat: number, nextLng: number) => {
+          onChangeRef.current(
+            Number(nextLat.toFixed(6)),
+            Number(nextLng.toFixed(6)),
+          );
+        };
 
-    map.on("click", (e: L.LeafletMouseEvent) => {
-      const nextLat = Number(e.latlng.lat.toFixed(6));
-      const nextLng = Number(e.latlng.lng.toFixed(6));
-      marker.setLatLng([nextLat, nextLng]);
-      onChangeRef.current(nextLat, nextLng);
-    });
+        const readLatLng = (coord: naver.maps.Coord) => {
+          if (coord instanceof maps.LatLng) {
+            return { lat: coord.lat(), lng: coord.lng() };
+          }
+          const point = coord as naver.maps.Point;
+          return { lat: point.y, lng: point.x };
+        };
 
-    mapRef.current = map;
-    markerRef.current = marker;
+        listenersRef.current = [
+          maps.Event.addListener(marker, "dragend", () => {
+            const pos = readLatLng(marker.getPosition());
+            emit(pos.lat, pos.lng);
+          }),
+          maps.Event.addListener(map, "click", (e: naver.maps.PointerEvent) => {
+            const pos = readLatLng(e.coord);
+            const next = new maps.LatLng(pos.lat, pos.lng);
+            marker.setPosition(next);
+            emit(pos.lat, pos.lng);
+          }),
+        ];
 
-    const resizeTimer = window.setTimeout(() => {
-      map.invalidateSize();
-    }, 80);
+        mapRef.current = map;
+        markerRef.current = marker;
+      } catch {
+        // 상위 AddressLocationFields에서 메시지 표시
+      }
+    })();
 
     return () => {
-      window.clearTimeout(resizeTimer);
-      map.remove();
-      mapRef.current = null;
+      cancelled = true;
+      if (listenersRef.current.length > 0 && window.naver?.maps) {
+        window.naver.maps.Event.removeListener(listenersRef.current);
+      }
+      listenersRef.current = [];
+      if (mapRef.current) {
+        mapRef.current.destroy();
+        mapRef.current = null;
+      }
       markerRef.current = null;
     };
-    // mount once; external lat/lng sync handled below
+    // mount once; lat/lng sync below
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const map = mapRef.current;
     const marker = markerRef.current;
-    if (!map || !marker || lat == null || lng == null) return;
-    const current = marker.getLatLng();
-    if (
-      Math.abs(current.lat - lat) < 0.000001 &&
-      Math.abs(current.lng - lng) < 0.000001
-    ) {
+    if (!map || !marker || lat == null || lng == null || !window.naver?.maps) {
       return;
     }
-    marker.setLatLng([lat, lng]);
-    map.setView([lat, lng], Math.max(map.getZoom(), DEFAULT_ZOOM));
+    const maps = window.naver.maps;
+    const current = marker.getPosition();
+    const curLat =
+      current instanceof maps.LatLng ? current.lat() : (current as naver.maps.Point).y;
+    const curLng =
+      current instanceof maps.LatLng ? current.lng() : (current as naver.maps.Point).x;
+    if (Math.abs(curLat - lat) < 0.000001 && Math.abs(curLng - lng) < 0.000001) {
+      return;
+    }
+    const next = new maps.LatLng(lat, lng);
+    marker.setPosition(next);
+    map.setCenter(next);
   }, [lat, lng]);
 
   return (
     <div className="overflow-hidden rounded-md border border-border">
       <div ref={containerRef} className="h-72 w-full" />
       <p className="border-t border-border bg-stone-50 px-3 py-2 text-xs text-muted">
-        지도를 클릭하거나 핀을 드래그하면 좌표와 주소가 갱신됩니다. 저장을 눌러야
-        앱에 반영됩니다.
+        네이버 지도를 클릭하거나 핀을 드래그하면 좌표와 주소가 갱신됩니다. 저장을
+        눌러야 앱에 반영됩니다.
       </p>
     </div>
   );

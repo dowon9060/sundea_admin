@@ -25,13 +25,15 @@ npm run dev
 cp .env.example .env.local
 # SUNDAE_ADMIN_KEY = backend-cf ADMIN_KEY
 # SUNDAE_SESSION_SECRET 설정
-# (선택) KAKAO_REST_API_KEY — 주소 검색 정확도 향상
+# NEXT_PUBLIC_NCP_KEY_ID = 앱과 동일한 네이버 Maps Client ID
 npm run dev
 ```
 
 초기 관리자: `jiras90@gmail.com` / (시드된 임시 비밀번호)
 
-푸드트럭 등록·수정 시 주소 검색/우편번호/지도로 보기(핀 이동)로 위치를 잡은 뒤 저장하면 앱에 반영됩니다.
+주소 검색·지도로 보기는 네이버 지도(앱과 동일 NCP 키)를 사용합니다.  
+NCP 콘솔 Web 서비스 URL에 `http://localhost:3000`(또는 사용 포트)을 등록하세요.  
+위치를 잡은 뒤 저장하면 앱에 반영됩니다.
 
 ## 메뉴
 
