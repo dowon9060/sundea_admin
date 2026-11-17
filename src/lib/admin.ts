@@ -55,6 +55,14 @@ export function adminUpdateHours(
   });
 }
 
+export function adminUploadPhoto(file: Blob) {
+  return apiRequest<{ key: string; url: string }>("admin/photos", {
+    method: "POST",
+    headers: { "Content-Type": file.type || "application/octet-stream" },
+    body: file,
+  });
+}
+
 export function adminListRegions() {
   return apiRequest<RegionCount[]>("admin/regions");
 }

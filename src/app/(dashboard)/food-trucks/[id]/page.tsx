@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AddressLocationFields } from "@/components/address-location-fields";
 import { CategorySelect } from "@/components/category-select";
+import { PhotoUploadField } from "@/components/photo-upload-field";
 import { adminGetStore, adminUpdateHours, adminUpdateStore } from "@/lib/admin";
 import { ApiError } from "@/lib/api-error";
 import { DAY_LABELS } from "@/lib/labels";
@@ -226,13 +227,7 @@ export default function FoodTruckDetailPage() {
             className={fieldClass}
           />
         </Field>
-        <Field label="사진 URL">
-          <input
-            value={photoUrl}
-            onChange={(e) => setPhotoUrl(e.target.value)}
-            className={fieldClass}
-          />
-        </Field>
+        <PhotoUploadField value={photoUrl} onChange={setPhotoUrl} />
 
         <div>
           <div className="mb-2 flex items-center justify-between">

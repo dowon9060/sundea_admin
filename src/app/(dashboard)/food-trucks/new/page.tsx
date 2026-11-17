@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AddressLocationFields } from "@/components/address-location-fields";
 import { CategorySelect } from "@/components/category-select";
+import { PhotoUploadField } from "@/components/photo-upload-field";
 import { adminCreateStore } from "@/lib/admin";
 import { ApiError } from "@/lib/api-error";
 import type { BusinessStatus, StoreCategory } from "@/lib/types";
@@ -124,14 +125,7 @@ export default function NewFoodTruckPage() {
             className={fieldClass}
           />
         </Field>
-        <Field label="사진 URL">
-          <input
-            value={photoUrl}
-            onChange={(e) => setPhotoUrl(e.target.value)}
-            placeholder="https://..."
-            className={fieldClass}
-          />
-        </Field>
+        <PhotoUploadField value={photoUrl} onChange={setPhotoUrl} />
         <Field label="영업 상태">
           <select
             value={businessStatus}

@@ -8,6 +8,8 @@ import {
 
 const UPSTREAM_TIMEOUT_MS = 25_000;
 const MAX_BODY_BYTES = 1_000_000;
+const MAX_PHOTO_BODY_BYTES = 5 * 1024 * 1024;
+const PHOTO_PATH = "admin/photos";
 
 function isAllowed(path: string, method: string) {
   if (!path.startsWith("admin/")) return false;
@@ -58,10 +60,14 @@ async function proxy(req: NextRequest, pathSegments: string[]) {
   if (contentType) headers.set("content-type", contentType);
 
   const hasBody = !["GET", "HEAD"].includes(method);
-  let body: string | undefined;
+  const maxBytes = path === PHOTO_PATH ? MAX_PHOTO_BODY_BYTES : MAX_BODY_BYTES;
+  if (Number(req.headers.get("content-length") || "0") > maxBytes) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+  let body: ArrayBuffer | undefined;
   if (hasBody) {
-    body = await req.text();
-    if (body.length > MAX_BODY_BYTES) {
+    body = await req.arrayBuffer();
+    if (body.byteLength > maxBytes) {
       return NextResponse.json({ error: "Payload too large" }, { status: 413 });
     }
   }
