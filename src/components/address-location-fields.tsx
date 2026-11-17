@@ -39,6 +39,7 @@ type Props = {
 };
 
 function parseCoord(value: string): number | null {
+  if (value.trim() === "") return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
