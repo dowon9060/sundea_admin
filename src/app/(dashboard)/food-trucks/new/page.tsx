@@ -37,6 +37,13 @@ export default function NewFoodTruckPage() {
     try {
       const latN = Number(lat);
       const lngN = Number(lng);
+      if (
+        lat.trim() === "" ||
+        lng.trim() === "" ||
+        (latN === 0 && lngN === 0)
+      ) {
+        throw new ApiError("주소 검색이나 지도로 위치를 지정해 주세요.", 400);
+      }
       if (!Number.isFinite(latN) || !Number.isFinite(lngN)) {
         throw new ApiError("위도·경도를 숫자로 입력해 주세요.", 400);
       }

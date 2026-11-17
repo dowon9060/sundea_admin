@@ -71,8 +71,11 @@ export function AddressLocationFields({
   const reqSeq = useRef(0);
   const reverseSeq = useRef(0);
 
-  const latN = parseCoord(lat);
-  const lngN = parseCoord(lng);
+  const latRaw = parseCoord(lat);
+  const lngRaw = parseCoord(lng);
+  const isNullIsland = latRaw === 0 && lngRaw === 0;
+  const latN = isNullIsland ? null : latRaw;
+  const lngN = isNullIsland ? null : lngRaw;
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
