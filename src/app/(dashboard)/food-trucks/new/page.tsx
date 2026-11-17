@@ -24,7 +24,7 @@ export default function NewFoodTruckPage() {
   const [lng, setLng] = useState("");
   const [locationNote, setLocationNote] = useState("");
   const [description, setDescription] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [businessStatus, setBusinessStatus] =
     useState<BusinessStatus>("unknown");
   const [menus, setMenus] = useState<MenuDraft[]>([{ name: "", price: "" }]);
@@ -56,7 +56,7 @@ export default function NewFoodTruckPage() {
         lng: lngN,
         location_note: locationNote || null,
         description: description || null,
-        photo_url: photoUrl || null,
+        photo_urls: photoUrls,
         business_status: businessStatus,
         status: "active",
         menus: menus
@@ -125,7 +125,7 @@ export default function NewFoodTruckPage() {
             className={fieldClass}
           />
         </Field>
-        <PhotoUploadField value={photoUrl} onChange={setPhotoUrl} />
+        <PhotoUploadField value={photoUrls} onChange={setPhotoUrls} />
         <Field label="영업 상태">
           <select
             value={businessStatus}

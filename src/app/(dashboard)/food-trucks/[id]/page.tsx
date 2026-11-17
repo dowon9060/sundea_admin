@@ -41,7 +41,7 @@ export default function FoodTruckDetailPage() {
   const [lng, setLng] = useState("");
   const [locationNote, setLocationNote] = useState("");
   const [description, setDescription] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [menus, setMenus] = useState<MenuDraft[]>([]);
   const [hours, setHours] = useState<HourDraft[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +65,13 @@ export default function FoodTruckDetailPage() {
       setLng(data.lng != null ? String(data.lng) : "");
       setLocationNote(data.location_note ?? "");
       setDescription(data.description ?? "");
-      setPhotoUrl(data.photo_url ?? "");
+      setPhotoUrls(
+        data.photo_urls?.length
+          ? data.photo_urls
+          : data.photo_url
+            ? [data.photo_url]
+            : [],
+      );
       setMenus(
         data.menus.length
           ? data.menus.map((m) => ({ name: m.name, price: String(m.price) }))
@@ -123,7 +129,7 @@ export default function FoodTruckDetailPage() {
         lng: lngN,
         location_note: locationNote || null,
         description: description || null,
-        photo_url: photoUrl || null,
+        photo_urls: photoUrls,
         menus: menus
           .filter((m) => m.name.trim())
           .map((m) => ({ name: m.name.trim(), price: Number(m.price) || 0 })),
@@ -227,7 +233,7 @@ export default function FoodTruckDetailPage() {
             className={fieldClass}
           />
         </Field>
-        <PhotoUploadField value={photoUrl} onChange={setPhotoUrl} />
+        <PhotoUploadField value={photoUrls} onChange={setPhotoUrls} />
 
         <div>
           <div className="mb-2 flex items-center justify-between">

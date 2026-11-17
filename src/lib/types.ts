@@ -61,6 +61,7 @@ export type AdminHour = {
 export type AdminStoreDetail = AdminStoreListItem & {
   distance_m?: number | null;
   location_stale?: boolean;
+  photo_urls?: string[];
   menus: AdminMenu[];
   hours: AdminHour[];
 };
@@ -94,7 +95,7 @@ export type CreateStorePayload = {
   lng: number;
   address: string;
   description?: string | null;
-  photo_url?: string | null;
+  photo_urls?: string[];
   location_note?: string | null;
   business_status?: BusinessStatus;
   status?: StoreStatus;
@@ -111,7 +112,7 @@ export type UpdateStorePayload = Partial<{
   name: string;
   category: StoreCategory;
   description: string | null;
-  photo_url: string | null;
+  photo_urls: string[];
   status: StoreStatus;
   business_status: BusinessStatus;
   lat: number;
