@@ -212,17 +212,12 @@ export default function FoodTruckDetailPage() {
           address={address}
           lat={lat}
           lng={lng}
+          detail={locationNote}
           onAddressChange={setAddress}
           onLatChange={setLat}
           onLngChange={setLng}
+          onDetailChange={setLocationNote}
         />
-        <Field label="위치 메모">
-          <input
-            value={locationNote}
-            onChange={(e) => setLocationNote(e.target.value)}
-            className={fieldClass}
-          />
-        </Field>
         <Field label="설명">
           <textarea
             value={description}

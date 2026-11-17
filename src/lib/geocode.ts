@@ -2,6 +2,8 @@ export type GeocodeResult = {
   id: string;
   name: string;
   address: string;
+  roadAddress: string;
+  jibunAddress: string;
   lat: number;
   lng: number;
   provider: "naver";

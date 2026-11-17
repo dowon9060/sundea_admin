@@ -28,14 +28,14 @@ type Props = {
   address: string;
   lat: string;
   lng: string;
+  detail: string;
   onAddressChange: (value: string) => void;
   onLatChange: (value: string) => void;
   onLngChange: (value: string) => void;
+  onDetailChange: (value: string) => void;
   addressRequired?: boolean;
   latRequired?: boolean;
   lngRequired?: boolean;
-  addressLabel?: string;
-  addressPlaceholder?: string;
 };
 
 function parseCoord(value: string): number | null {
@@ -48,17 +48,16 @@ export function AddressLocationFields({
   address,
   lat,
   lng,
+  detail,
   onAddressChange,
   onLatChange,
   onLngChange,
+  onDetailChange,
   addressRequired,
   latRequired,
   lngRequired,
-  addressLabel = "주소",
-  addressPlaceholder = "네이버 주소 검색 또는 지도에서 지정",
 }: Props) {
   const listId = useId();
-  const [query, setQuery] = useState("");
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [open, setOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
@@ -125,7 +124,6 @@ export function AddressLocationFields({
     onAddressChange(item.address);
     onLatChange(String(item.lat));
     onLngChange(String(item.lng));
-    setQuery("");
     setResults([]);
     setOpen(false);
     setError(null);
@@ -133,8 +131,12 @@ export function AddressLocationFields({
     setMapOpen(true);
   }
 
-  function scheduleSearch(value: string) {
-    setQuery(value);
+  function onAddressInput(value: string) {
+    onAddressChange(value);
+    onLatChange("");
+    onLngChange("");
+    reverseSeq.current++;
+    setResolving(false);
     setError(null);
     setHint(null);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -173,15 +175,19 @@ export function AddressLocationFields({
     <div className="space-y-4">
       <div ref={wrapRef} className="relative">
         <label className="block text-sm">
-          <span className="mb-1.5 block text-stone-700">네이버 주소 검색</span>
+          <span className="mb-1.5 block text-stone-700">
+            주소
+            {addressRequired ? " *" : ""}
+          </span>
           <div className="flex gap-2">
             <input
-              value={query}
-              onChange={(e) => scheduleSearch(e.target.value)}
+              required={addressRequired}
+              value={address}
+              onChange={(e) => onAddressInput(e.target.value)}
               onFocus={() => {
                 if (results.length > 0) setOpen(true);
               }}
-              placeholder="도로명·지번·동 이름으로 검색"
+              placeholder="도로명·지번·동 이름으로 네이버 주소 검색"
               className={fieldClass}
               autoComplete="off"
               role="combobox"
@@ -220,28 +226,29 @@ export function AddressLocationFields({
                   onClick={() => applyResult(item)}
                 >
                   <span className="block text-sm font-medium text-stone-900">
-                    {item.name}
+                    {item.roadAddress || item.jibunAddress}
                   </span>
-                  <span className="mt-0.5 block text-xs text-muted">
-                    {item.address}
-                  </span>
+                  {item.roadAddress && item.jibunAddress && (
+                    <span className="mt-0.5 block text-xs text-muted">
+                      지번 {item.jibunAddress}
+                    </span>
+                  )}
                 </button>
               </li>
             ))}
+            <li className="border-t border-border px-3 py-1.5 text-right text-[11px] text-muted">
+              네이버 주소 검색 결과
+            </li>
           </ul>
         )}
       </div>
 
       <label className="block text-sm">
-        <span className="mb-1.5 block text-stone-700">
-          {addressLabel}
-          {addressRequired ? " *" : ""}
-        </span>
+        <span className="mb-1.5 block text-stone-700">상세 주소</span>
         <input
-          required={addressRequired}
-          value={address}
-          onChange={(e) => onAddressChange(e.target.value)}
-          placeholder={addressPlaceholder}
+          value={detail}
+          onChange={(e) => onDetailChange(e.target.value)}
+          placeholder="출구·랜드마크·건물 앞 등"
           className={fieldClass}
         />
       </label>
@@ -294,7 +301,7 @@ export function AddressLocationFields({
       {error && <p className="text-sm text-red-700">{error}</p>}
       {hint && !error && <p className="text-sm text-green-700">{hint}</p>}
       <p className="text-xs text-muted">
-        네이버 주소 검색·지도로 위치를 잡은 뒤 저장하면 앱에 그대로 노출됩니다.
+        주소는 네이버 검색 결과에서 선택하거나 지도로 지정해야 저장됩니다.
       </p>
     </div>
   );

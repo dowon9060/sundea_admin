@@ -107,23 +107,15 @@ export default function NewFoodTruckPage() {
           address={address}
           lat={lat}
           lng={lng}
+          detail={locationNote}
           onAddressChange={setAddress}
           onLatChange={setLat}
           onLngChange={setLng}
+          onDetailChange={setLocationNote}
           addressRequired
           latRequired
           lngRequired
-          addressLabel="주소 (시/도부터)"
-          addressPlaceholder="예: 서울특별시 동작구 상도동"
         />
-        <Field label="위치 메모">
-          <input
-            value={locationNote}
-            onChange={(e) => setLocationNote(e.target.value)}
-            placeholder="출구·랜드마크 등"
-            className={fieldClass}
-          />
-        </Field>
         <Field label="설명">
           <textarea
             value={description}

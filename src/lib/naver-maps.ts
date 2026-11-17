@@ -16,16 +16,44 @@ function getKeyId() {
   return key;
 }
 
+const GEOCODER_TIMEOUT_MS = 8000;
+
+/** maps.js onload 이후 geocoder 서브모듈이 별도 스크립트로 늦게 붙는다 */
+function hasGeocoder(maps: NaverMaps): boolean {
+  return typeof (maps as { Service?: { geocode?: unknown } }).Service?.geocode ===
+    "function";
+}
+
+function waitForGeocoder(maps: NaverMaps): Promise<NaverMaps> {
+  if (hasGeocoder(maps)) return Promise.resolve(maps);
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    const timer = setInterval(() => {
+      if (hasGeocoder(maps)) {
+        clearInterval(timer);
+        resolve(maps);
+      } else if (Date.now() - started > GEOCODER_TIMEOUT_MS) {
+        clearInterval(timer);
+        reject(new Error("네이버 Geocoder 모듈을 불러오지 못했습니다."));
+      }
+    }, 50);
+  });
+}
+
 export function loadNaverMaps(): Promise<NaverMaps> {
   if (typeof window === "undefined") {
     return Promise.reject(
       new Error("브라우저에서만 네이버 지도를 사용할 수 있습니다."),
     );
   }
-  if (window.naver?.maps) {
-    return Promise.resolve(window.naver.maps);
-  }
   if (loadPromise) return loadPromise;
+  if (window.naver?.maps) {
+    loadPromise = waitForGeocoder(window.naver.maps).catch((err) => {
+      loadPromise = null;
+      throw err;
+    });
+    return loadPromise;
+  }
 
   loadPromise = new Promise<NaverMaps>((resolve, reject) => {
     const keyId = getKeyId();
@@ -80,7 +108,12 @@ export function loadNaverMaps(): Promise<NaverMaps> {
       reject(new Error("네이버 지도 SDK 로드에 실패했습니다."));
     };
     document.head.appendChild(script);
-  });
+  })
+    .then(waitForGeocoder)
+    .catch((err) => {
+      loadPromise = null;
+      throw err;
+    });
 
   return loadPromise;
 }
@@ -145,6 +178,8 @@ export async function searchNaverAddress(query: string): Promise<GeocodeResult[]
             id: `naver-${index}-${item.x}-${item.y}`,
             name: item.roadAddress || item.jibunAddress || address,
             address,
+            roadAddress: item.roadAddress || "",
+            jibunAddress: item.jibunAddress || "",
             lat,
             lng,
             provider: "naver" as const,
