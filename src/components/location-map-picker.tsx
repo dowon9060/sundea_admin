@@ -10,18 +10,30 @@ type Props = {
   lat: number | null;
   lng: number | null;
   onChange: (lat: number, lng: number) => void;
+  heightClass?: string;
 };
 
-export function LocationMapPicker({ lat, lng, onChange }: Props) {
+export function LocationMapPicker({
+  lat,
+  lng,
+  onChange,
+  heightClass = "h-72",
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<naver.maps.Map | null>(null);
   const markerRef = useRef<naver.maps.Marker | null>(null);
   const onChangeRef = useRef(onChange);
   const listenersRef = useRef<naver.maps.MapEventListener[]>([]);
 
+  const pointRef = useRef({ lat, lng });
+
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    pointRef.current = { lat, lng };
+  }, [lat, lng]);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,10 +43,11 @@ export function LocationMapPicker({ lat, lng, onChange }: Props) {
         const maps = await loadNaverMaps();
         if (cancelled || !containerRef.current) return;
 
-        const hasPoint = lat != null && lng != null;
+        const point = pointRef.current;
+        const hasPoint = point.lat != null && point.lng != null;
         const center = new maps.LatLng(
-          hasPoint ? lat : DEFAULT_CENTER.lat,
-          hasPoint ? lng : DEFAULT_CENTER.lng,
+          hasPoint ? point.lat! : DEFAULT_CENTER.lat,
+          hasPoint ? point.lng! : DEFAULT_CENTER.lng,
         );
 
         const map = new maps.Map(containerRef.current, {
@@ -104,8 +117,6 @@ export function LocationMapPicker({ lat, lng, onChange }: Props) {
       }
       markerRef.current = null;
     };
-    // mount once; lat/lng sync below
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -126,14 +137,14 @@ export function LocationMapPicker({ lat, lng, onChange }: Props) {
     const next = new maps.LatLng(lat, lng);
     marker.setPosition(next);
     map.setCenter(next);
+    if (map.getZoom() < DEFAULT_ZOOM) map.setZoom(DEFAULT_ZOOM);
   }, [lat, lng]);
 
   return (
-    <div className="overflow-hidden rounded-md border border-border">
-      <div ref={containerRef} className="h-72 w-full" />
+    <div className="relative z-0 overflow-hidden rounded-md border border-border">
+      <div ref={containerRef} className={`${heightClass} w-full`} />
       <p className="border-t border-border bg-stone-50 px-3 py-2 text-xs text-muted">
-        네이버 지도를 클릭하거나 핀을 드래그하면 좌표와 주소가 갱신됩니다. 저장을
-        눌러야 앱에 반영됩니다.
+        지도를 클릭하거나 핀을 드래그하면 위치와 주소가 함께 바뀝니다.
       </p>
     </div>
   );

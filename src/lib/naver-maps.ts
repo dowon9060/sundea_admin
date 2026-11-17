@@ -215,7 +215,7 @@ export async function reverseNaverGeocode(
           reject(new Error("네이버 좌표 주소 변환에 실패했습니다."));
           return;
         }
-        const address = formatReverseAddress(response);
+        const address = formatReverseAddress(response).replace(/\s+/g, " ").trim();
         if (!address) {
           reject(new Error("해당 좌표의 주소를 찾지 못했습니다."));
           return;
