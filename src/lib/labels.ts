@@ -6,7 +6,7 @@ export const CATEGORY_LABELS: Record<StoreCategory, string> = {
   dakkochi: "닭꼬치",
   mandu: "만두",
   takoyaki: "타코야키",
-  chicken: "치킨",
+  chicken: "치킨·통닭",
   gopchang: "곱창",
   hotteok: "호떡",
   hoe: "회",
